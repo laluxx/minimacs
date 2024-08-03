@@ -1,0 +1,13 @@
+auto-save-list
+.cache
+elpa
+eshell
+history
+ielm-history.eld
+.lsp-session-v1
+.mc-lists.el
+places
+projects
+recentf
+transient
+url
