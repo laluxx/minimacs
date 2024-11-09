@@ -8,8 +8,6 @@
 ;; if you don't use 'hl-line-mode' it makes no sense to do
 ;; all those extra checks 
 
-;; TODO make it works also in tty mode
-;; TODO add a variable to turn on or off the cursor backup system (and FIX it)
 
 ;;; Code:
 
@@ -36,16 +34,32 @@
 ;;        fg))))
 
 ;; UNSPECIFIED + CURSOR-BACKUP TODO
+;; (defun crystal-point/update-cursor-color ()
+;;   "Update the cursor color based on the foreground color of the character at point."
+;;   (let* ((char (char-after (point)))
+;;          (fg (if (and char (not (char-equal char ?\s)) (not (char-equal char ?\t)) (not (char-equal char ?\n)))
+;;                  (face-attribute (or (car (face-at-point nil t)) 'default) :foreground nil t)
+;;                (face-attribute 'cursor-backup :foreground nil t))))
+;;     (set-cursor-color
+;;      (if (or (not fg) (string= fg "unspecified"))
+;;          (face-attribute 'default :foreground)
+;;        fg))))
+
+;; UNSPECIFIED + CURSOR-BACKUP + TERMINAL
 (defun crystal-point/update-cursor-color ()
-  "Update the cursor color based on the foreground color of the character at point."
+  "Update the cursor color based on the foreground color of the character at point.
+Works in both GUI and terminal modes."
   (let* ((char (char-after (point)))
          (fg (if (and char (not (char-equal char ?\s)) (not (char-equal char ?\t)) (not (char-equal char ?\n)))
                  (face-attribute (or (car (face-at-point nil t)) 'default) :foreground nil t)
-               (face-attribute 'cursor-backup :foreground nil t))))
-    (set-cursor-color
-     (if (or (not fg) (string= fg "unspecified"))
-         (face-attribute 'default :foreground)
-       fg))))
+               (face-attribute 'cursor-backup :foreground nil t)))
+         (color (if (or (not fg) (string= fg "unspecified"))
+                    (face-attribute 'default :foreground)
+                  fg)))
+    (if (display-graphic-p)
+        (set-cursor-color color) ;; GUI
+      (send-string-to-terminal (format "\e]12;%s\a" color)))));; TTY mode: use ANSI escape codes to set the cursor color.
+
 
 ;; HL-LINE FIX (slowest) 
 ;; (defun crystal-point/update-cursor-color ()
@@ -77,11 +91,6 @@
             (lambda ()
               (set-face-attribute 'cursor-backup nil
                                   :foreground (face-attribute 'cursor :background)))))
-
-;; (defun crystal-point-enable ()
-;;   "Enable dynamic cursor color updates."
-;;   (interactive)
-;;   (add-hook 'post-command-hook 'crystal-point/update-cursor-color))
 
 ;;;###autoload
 (defun crystal-point-disable ()

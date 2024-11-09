@@ -11,6 +11,9 @@
 ;; TODO pressing "'" should insert 2 if we are in a comment in 'emacs-lisp-mode'
 ;; TODO 'C-e' should be callable multiple times and it should increment the arg or something idk
 
+;; TODO make `iedit-occurrence' inherit from menu instead of 'overalay'
+
+
 ;; MELPA
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -38,7 +41,6 @@
 (global-set-key (kbd "C-h C-l") 'find-library)
 (global-set-key (kbd "M-s") 'consult-line)
 (global-set-key (kbd "C-=") 'text-scale-increase)
-(global-set-key (kbd "C-S-k") 'kill-region)
 (global-set-key (kbd "C--") 'text-scale-decrease)
 
 (global-set-key (kbd "C-h C-v") 'set-variable)
@@ -55,7 +57,7 @@
 
 (global-set-key (kbd "C-x g") 'laluxx/google-this)
 (global-set-key (kbd "C-c C-p") 'laluxx/find-package-source-code)
-(global-set-key (kbd "C-c C-i") 'info-display-manual)
+(global-set-key (kbd "C-h C-i") 'info-display-manual)
 (global-set-key (kbd "C-x C-r") 'consult-recent-file)
 (global-set-key (kbd "C-h C-f") 'describe-face)
 (global-set-key (kbd "C-c C-j") 'laluxx/toggle-eat)
@@ -97,6 +99,7 @@
 
 
 
+
 (use-package navi
   :load-path "~/.config/emacs/lisp/navi")
 
@@ -122,17 +125,19 @@
 
 ;; THEME
 
-
+(set-face-attribute 'completions-highlight nil
+                    :inherit 'menu)
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(corfu-bar ((t (:background "#32324A"))))
- '(corfu-border ((t (:background "#252534"))))
- '(corfu-current ((t (:background "#32324A" :weight extrabold))))
- '(corfu-default ((t (:background "#252534"))))
+ '(child-frame-border ((t (:background "#171717"))))
+ '(corfu-bar ((t (:background "#222225"))))
+ '(corfu-border ((t (:background "#18181B"))))
+ '(corfu-current ((t (:background "#222225" :foreground "#968cc7" :weight extrabold))))
+ '(corfu-default ((t (:background "#18181B"))))
  '(dired-subtree-depth-1-face ((t (:background unspecified))))
  '(dired-subtree-depth-2-face ((t (:background unspecified))))
  '(dired-subtree-depth-3-face ((t (:background unspecified))))
@@ -143,6 +148,8 @@
  '(font-lock-function-name-face ((t (:weight bold))))
  '(font-lock-keyword-face ((t (:weight bold))))
  '(font-lock-type-face ((t (:weight bold))))
+ '(lsp-ui-doc-background ((t (:background "#171717"))))
+ '(markdown-code-face ((t (:extend t :background "#1c1c1c"))))
  '(orderless-match-face-0 ((t (:foreground unspecified :background unspecified))))
  '(orderless-match-face-1 ((t (:foreground unspecified :background unspecified))))
  '(orderless-match-face-2 ((t (:foreground unspecified :background unspecified))))
@@ -155,8 +162,12 @@
  '(org-level-4 ((t (:inherit outline-4 :height 1.4))))
  '(org-level-5 ((t (:inherit outline-5 :height 1.3))))
  '(org-level-6 ((t (:inherit outline-5 :height 1.2))))
- '(org-level-7 ((t (:inherit outline-5 :height 1.1)))))
+ '(org-level-7 ((t (:inherit outline-5 :height 1.1))))
+ '(vertico-current ((t (:foreground unspecified)))))
 
+
+(use-package all-the-icons
+  :ensure t)
 
 (use-package doom-modeline
   :ensure t
@@ -164,8 +175,12 @@
   (setq doom-modeline-bar-width 0)
   (doom-modeline-mode))
 
+
 (use-package doom-themes
-  :ensure t)
+  :ensure t
+  :config
+  (load-theme 'doom-badger t)
+  )
 
 (use-package kaolin-themes
   :ensure t
@@ -174,7 +189,7 @@
   (setq kaolin-themes-bold t
 	kaolin-themes-italic t
 	kaolin-themes-underline t)
-  (load-theme 'kaolin-ocean t)
+  ;; (load-theme 'kaolin-dark t)
   )
 
 (use-package theme-magic
@@ -188,24 +203,21 @@
 (global-auto-revert-mode 1)
 (save-place-mode t)
 
-(defun mwim-beginning ()
-  "Move point at the beginning of line,
-if already there go back to indentation instead"
-  (interactive "^")
-  (if (bolp)                   
-      (back-to-indentation)
-    (move-beginning-of-line nil)))
+;; (defun mwim-beginning ()
+;;   "Move point at the beginning of line,
+;; if already there go back to indentation instead"
+;;   (interactive "^")
+;;   (if (bolp)                   
+;;       (back-to-indentation)
+;;     (move-beginning-of-line nil)))
 
-(defun mwim-end ()
-  "Move point at the end of line,
-if already there go at end of line text"
-  (interactive "^")
-  (if (eolp)
-      (end-of-line-text)
-    (move-end-of-line nil)))
-
-(global-set-key (kbd "C-a") 'mwim-beginning)
-(global-set-key (kbd "C-e") 'mwim-end)
+;; (defun mwim-end ()
+;;   "Move point at the end of line,
+;; if already there go at end of line text"
+;;   (interactive "^")
+;;   (if (eolp)
+;;       (end-of-line-text)
+;;     (move-end-of-line nil)))
 
 
 (defun laluxx/kill-line-or-kill-region ()
@@ -252,17 +264,21 @@ If point is inside a string, 'kill-string' instead."
 (global-set-key (kbd "y") 'laluxx/insert-or-copy-region)
 
 (defun laluxx/insert-or-eval-region ()
-  "Insert the character 'e' if no active region, otherwise evaluate the region and then deactivate the region."
+  "Insert the character 'e' if no active region, otherwise evaluate the region.
+In .lisp files, use custom lisp evaluator, otherwise use default eval-region."
   (interactive)
   (if (use-region-p)
       (progn
-	    (call-interactively 'eval-region)
-	    (deactivate-mark))  ; Deselect the region correctly without signaling quit
+        (if (and buffer-file-name (string-match "\\.lisp$" buffer-file-name))
+            (call-interactively 'laluxx/custom-eval-region)
+          (call-interactively 'eval-region))
+        (deactivate-mark))
     (insert "e")))
 
 (global-set-key (kbd "e") 'laluxx/insert-or-eval-region)
 
 
+;; TODO don't indent in Makefile
 (defun laluxx/yank-indent ()
   "Yank content and then indent the yanked region."
   (interactive)
@@ -301,11 +317,13 @@ If point is inside a string, 'kill-string' instead."
   )
 
 
-
-
 (use-package iedit
   :ensure t
   :config
+
+  (with-eval-after-load 'iedit
+    (set-face-attribute 'iedit-occurrence nil :inherit 'menu))
+  
   (defun laluxx/iedit-forward-word()
     "Activate iedit-mode and go to the end of the current word."
     (interactive)
@@ -322,7 +340,139 @@ If point is inside a string, 'kill-string' instead."
   (global-set-key (kbd "M-i") 'laluxx/iedit-forward-word))
 
 
+;;;; ESHELL
+
+(defun laluxx/toggle-eshell ()
+  (interactive)
+  (if (get-buffer "*eshell*")
+      (if (equal (current-buffer) (get-buffer "*eshell*"))
+          (bury-buffer)
+        (eshell))
+    (eshell)))
+
+(global-set-key (kbd "C-c C-j") 'laluxx/toggle-eshell)
+
+(use-package eshell
+  :ensure t
+  :defines eshell-prompt-function
+  :bind (:map eshell-mode-map
+	          ([remap recenter-top-bottom] . eshell/clear))
+  :config
+  (setq eshell-banner-message "")  ; Suppress the default welcome message
+  (add-hook 'eshell-mode-hook 'eshell/clear)  ; Clear eshell on startup
+
+  ;; Override eshell-cmpl-mode-map for M-TAB
+  (with-eval-after-load 'em-cmpl
+    (define-key eshell-cmpl-mode-map (kbd "M-TAB") 'eyebrowse-last-window-config))
+
+  (with-no-warnings
+    (defun eshell/clear ()
+      "Clear the eshell buffer."
+      (interactive)
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (eshell-send-input)))
+
+
+    (defun eshell/emacs (&rest args)
+      "Open a file (ARGS) in Emacs.  Some habits die hard."
+      (if (null args)
+	      ;; If I just ran "emacs", I probably expect to be launching
+	      ;; Emacs, which is rather silly since I'm already in Emacs.
+	      ;; So just pretend to do what I ask.
+	      (bury-buffer)
+	    ;; We have to expand the file names or else naming a directory in an
+	    ;; argument causes later arguments to be looked for in that directory,
+	    ;; not the starting directory
+	    (mapc #'find-file (mapcar #'expand-file-name (flatten-tree (reverse args))))))
+    (defalias 'eshell/e #'eshell/emacs)
+    (defalias 'eshell/ec #'eshell/emacs)
+
+    (defun eshell/ebc (&rest args)
+      "Compile a file (ARGS) in Emacs. Use `compile' to do background make."
+      (if (eshell-interactive-output-p)
+	      (let ((compilation-process-setup-function
+		         (list 'lambda nil
+		               (list 'setq 'process-environment
+			                 (list 'quote (eshell-copy-environment))))))
+	        (compile (eshell-flatten-and-stringify args))
+	        (pop-to-buffer compilation-last-buffer))
+	    (throw 'eshell-replace-command
+	           (let ((l (eshell-stringify-list (flatten-tree args))))
+		         (eshell-parse-command (car l) (cdr l))))))
+    (put 'eshell/ebc 'eshell-no-numeric-conversions t)
+
+    (defun eshell-view-file (file)
+      "View FILE.  A version of `view-file' which properly rets the eshell prompt."
+      (interactive "fView file: ")
+      (unless (file-exists-p file) (error "%s does not exist" file))
+      (let ((buffer (find-file-noselect file)))
+	    (if (eq (get (buffer-local-value 'major-mode buffer) 'mode-class)
+		        'special)
+	        (progn
+	          (switch-to-buffer buffer)
+	          (message "Not using View mode because the major mode is special"))
+	      (let ((undo-window (list (window-buffer) (window-start)
+				                   (+ (window-point)
+				                      (length (funcall eshell-prompt-function))))))
+	        (switch-to-buffer buffer)
+	        (view-mode-enter (cons (selected-window) (cons nil undo-window))
+			                 'kill-buffer)))))
+
+    (defun eshell/less (&rest args)
+      "Invoke `view-file' on a file (ARGS).
+
+\"less +42 foo\" will go to line 42 in the buffer for foo."
+      (while args
+	    (if (string-match "\\`\\+\\([0-9]+\\)\\'" (car args))
+	        (let* ((line (string-to-number (match-string 1 (pop args))))
+		           (file (pop args)))
+	          (eshell-view-file file)
+	          (forward-line line))
+	      (eshell-view-file (pop args)))))
+    (defalias 'eshell/more #'eshell/less))
+
+  ;;  Display extra information for prompt
+  (use-package eshell-prompt-extras
+    :ensure t
+    :after esh-opt
+    :defines eshell-highlight-prompt
+    :autoload (epe-theme-lambda epe-theme-dakrone epe-theme-pipeline)
+    :init (setq eshell-highlight-prompt nil
+		        eshell-prompt-function #'epe-theme-lambda))
+
+  ;; `eldoc' support
+  (use-package esh-help
+    :ensure t
+    :init (setup-esh-help-eldoc))
+
+  ;; `cd' to frequent directory in `eshell'
+  (use-package eshell-z
+    :ensure t
+    :hook (eshell-mode . (lambda () (require 'eshell-z)))))
+
+
+
 ;; COMPILATION
+
+;; (setq compilation-auto-jump-to-first-error t)
+;; (setq compilation-scroll-output 'first-error)
+(setq compilation-scroll-output 'nil)
+
+
+(defun laluxx/save-and-compile ()
+  "Save the current buffer and then compile.
+For .lisp files, use custom Lisp interpreter, otherwise use default compile-command."
+  (interactive)
+  (save-buffer)
+  (if (and buffer-file-name (string-match "\\.lisp$" buffer-file-name))
+      (let ((original-command compile-command))
+        (compile 
+         (format "/home/l/xos/projects/zig/lyra/zig-out/bin/lyra -e \"%s\""
+                 (with-current-buffer (current-buffer)
+                   (buffer-string))))
+        (setq compile-command original-command))
+    (compile compile-command)))
 
 (defun laluxx/save-and-compile ()
   "Save the current buffer and then compile without asking."
@@ -330,6 +480,7 @@ If point is inside a string, 'kill-string' instead."
   (save-buffer)  ; Save the current buffer
   (compile compile-command))
 
+(global-set-key (kbd "C-x c") 'laluxx/save-and-compile)
 (global-set-key (kbd "C-j") 'laluxx/save-and-compile)
 
 (defun laluxx/save-and-set-compile ()
@@ -388,9 +539,8 @@ If point is inside a string, 'kill-string' instead."
           messages-mode
           help-mode
           occur-mode
-          eshell-mode
           "^\\*xref\\*"
-          "^\\*Warnings\\*"
+          "^\\*eshell\\*"
           "^\\*Warnings\\*"
           "^\\*eat\\*"
           "^\\*ansi-term\\*"
@@ -421,10 +571,13 @@ If point is inside a string, 'kill-string' instead."
   "Hide the mode line in specific buffers and modes."
   (let ((buffer-name (buffer-name)))
     (when (or (member buffer-name '("*Warnings*"
+                                    "*Completions*"
                                     "*Compile-Log*"
+                                    "*Lisp Result*"
                                     "*rustic-compilation*"
                                     "*Embark Actions*"
                                     "*ansi-term*"
+                                    "*doom*"
                                     "*eat*"
                                     "*term*"
                                     "*ielm*"
@@ -461,6 +614,7 @@ If point is inside a string, 'kill-string' instead."
   "Set the popper-window-height to 15 when entering magit-log-mode."
   (when (derived-mode-p 'magit-log-mode)
     (customize-set-variable 'popper-window-height 15 "Set by entering magit-log-mode.")))
+
 
 (add-hook 'magit-revision-mode-hook 'set-popper-height-for-revision)
 (add-hook 'magit-log-mode-hook 'set-popper-height-for-log)
@@ -529,12 +683,13 @@ If point is inside a string, 'kill-string' instead."
   (require 'dired-subtree)
   (require 'dired-rainbow)
   ;; (require 'dired-narrow)
-  (custom-set-faces
-   '(dired-subtree-depth-1-face ((t (:background unspecified))))
-   '(dired-subtree-depth-2-face ((t (:background unspecified))))
-   '(dired-subtree-depth-3-face ((t (:background unspecified))))
-   '(dired-subtree-depth-4-face ((t (:background unspecified))))
-   '(dired-subtree-depth-5-face ((t (:background unspecified))))))
+  ;; (custom-set-faces
+  ;;  '(dired-subtree-depth-1-face ((t (:background unspecified))))
+  ;;  '(dired-subtree-depth-2-face ((t (:background unspecified))))
+  ;;  '(dired-subtree-depth-3-face ((t (:background unspecified))))
+  ;;  '(dired-subtree-depth-4-face ((t (:background unspecified))))
+  ;;  '(dired-subtree-depth-5-face ((t (:background unspecified)))))
+  )
 
 (defun my-dired-mode-setup ()
   "Custom keybindings and settings for `dired-mode`."
@@ -578,7 +733,7 @@ If point is inside a string, 'kill-string' instead."
 (setq frame-title-format '("%b – Minimacs")
       icon-title-format frame-title-format)
 
-(global-prettify-symbols-mode)
+;; (global-prettify-symbols-mode)
 
 (use-package rainbow-mode
   :diminish
@@ -621,32 +776,88 @@ If point is inside a string, 'kill-string' instead."
 
 
 
+;; ;; WINDOW DIVIDER
+
+;; (defun set-window-divider-colors ()                                             
+;;   (let ((bg-color (face-attribute 'default :background nil t)))                 
+;;     (set-face-foreground 'window-divider bg-color)                              
+;;     (set-face-background 'window-divider bg-color)                              
+;;     (set-face-foreground 'window-divider-first-pixel bg-color)                  
+;;     (set-face-background 'window-divider-first-pixel bg-color)                  
+;;     (set-face-foreground 'window-divider-last-pixel bg-color)                   
+;;     (set-face-background 'window-divider-last-pixel bg-color)))  
+
+;; (set-window-divider-colors) ;; Call it for the first loaded theme
+
+;; (setq window-divider-default-right-width 1)
+;; (setq window-divider-default-bottom-width 0)
+
+;; (with-eval-after-load 'consult
+;;   (advice-add 'consult-theme :after
+;;               (lambda (&rest _)
+;;                 (set-window-divider-colors))))
+
+;; (window-divider-mode 1)
+
+
 ;; WINDOW DIVIDER
+(defun set-window-divider-colors ()
+  (if (display-graphic-p)
+      ;; GUI mode - match background color
+      (let ((bg-color (face-attribute 'default :background nil t)))
+        (set-face-foreground 'window-divider bg-color)
+        (set-face-background 'window-divider bg-color)
+        (set-face-foreground 'window-divider-first-pixel bg-color)
+        (set-face-background 'window-divider-first-pixel bg-color)
+        (set-face-foreground 'window-divider-last-pixel bg-color)
+        (set-face-background 'window-divider-last-pixel bg-color))
+    ;; Terminal mode - use space character for divider
+    (unless standard-display-table
+      (setq standard-display-table (make-display-table)))
+    (set-display-table-slot standard-display-table 'vertical-border (make-glyph-code ?\s))))
 
-(defun set-window-divider-colors ()                                             
-  (let ((bg-color (face-attribute 'default :background nil t)))                 
-    (set-face-foreground 'window-divider bg-color)                              
-    (set-face-background 'window-divider bg-color)                              
-    (set-face-foreground 'window-divider-first-pixel bg-color)                  
-    (set-face-background 'window-divider-first-pixel bg-color)                  
-    (set-face-foreground 'window-divider-last-pixel bg-color)                   
-    (set-face-background 'window-divider-last-pixel bg-color)))  
-
-(set-window-divider-colors) ;; Call it for the first loaded theme
-
+;; Initial setup
 (setq window-divider-default-right-width 1)
 (setq window-divider-default-bottom-width 0)
 
+;; Set up colors for initial theme
+(set-window-divider-colors)
+
+;; Update colors when theme changes
 (with-eval-after-load 'consult
   (advice-add 'consult-theme :after
               (lambda (&rest _)
                 (set-window-divider-colors))))
 
+;; Enable window divider mode
 (window-divider-mode 1)
+
+
+;; TTY 
+;; Making emacs behave better in terminal mode
+
+;; Set terminal truncation indicator TODO for left too
+(unless (display-graphic-p)
+  (unless standard-display-table
+    (setq standard-display-table (make-display-table)))
+  (set-display-table-slot standard-display-table 'truncation (make-glyph-code ?›))
+  (xterm-mouse-mode 1)
+  (use-package xclip
+    :load-path "~/.config/emacs/lisp/xclip"
+    :config (xclip-mode)))
 
 
 
 ;; COMPLETION
+
+
+(add-hook 'completion-setup-hook
+          (lambda () (setq completion-show-help nil)))
+
+;; NOTE Uncomment to enable vertico completion in terminal mode
+;; (setq completion-in-region-function
+;;       (lambda (&rest args)
+;;         (apply #'consult-completion-in-region args)))
 
 (setq enable-recursive-minibuffers t)
 (setq tab-always-indent 'complete)
@@ -680,6 +891,12 @@ If point is inside a string, 'kill-string' instead."
   :ensure t
   :config
   (nerd-icons-completion-mode))
+
+(use-package corfu-terminal
+  :ensure t
+  :config 
+  (unless (display-graphic-p)
+    (corfu-terminal-mode +1)))
 
 (use-package corfu
   ;; Optional customization's
@@ -820,14 +1037,22 @@ If point is inside a string, 'kill-string' instead."
   ;; :hook ((c-mode . lsp)
   ;;        (c++-mode . lsp))
   :config
+  (setq lsp-enable-symbol-highlighting nil)
   (setq lsp-idle-delay 0.1) ; clangd is fast
-  (setq lsp-headerline-breadcrumb-enable nil))
+  (setq lsp-headerline-breadcrumb-enable nil)
+  (global-set-key (kbd "C-c C-k") #'lsp-ui-doc-show) ;; TODO only when lsp mode
+  )
+
 
 (use-package lsp-ui
   :ensure t
   :config
   (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
-  (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
+  (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)
+  (setq lsp-ui-doc-frame-parameters
+        '((border-width . 0)
+          ))
+  )
 
 (use-package consult-flycheck
   :ensure t)
@@ -920,28 +1145,19 @@ tell you about it. Very annoying. This prevents that."
 
 ;; LANGUAGES
 
-;; ELISP
 
-(global-set-key (kbd "C-M-h") 'mark-defun-or-sexpr)
+;; LISP
+;;;; Eval region using my custom lisp interpreter
 
-(defun mark-defun-or-sexpr ()
-  "Mark the current s-expression or if at `(` or `)`, mark only that s-expression."
-  (interactive)
-  (if (or (eq (char-after) ?\() (eq (char-after) ?\)))
-      (mark-sexp)
-    (mark-defun)))
-
-(defun setup-emacs-lisp-keybindings ()
-  "Set up keybindings for `emacs-lisp-mode`."
-  (define-key emacs-lisp-mode-map (kbd "C-M-h") 'mark-defun-or-sexpr))
-
-(add-hook 'emacs-lisp-mode-hook 'setup-emacs-lisp-keybindings)
-
+(defun laluxx/custom-eval-region (start end)
+  (interactive "r")
+  (save-buffer)
+  (let ((expression (buffer-substring-no-properties start end)))
+    (compile (format "/home/l/xos/projects/zig/lyra/zig-out/bin/lyra -e \"%s\"" expression))))
 
 
 ;; (setq inferior-lisp-program "clisp")
 
-;; ;; LISP Configuration with enhanced SLY interaction
 ;; (use-package sly
 ;;   :ensure t
 ;;   :config
@@ -987,6 +1203,9 @@ tell you about it. Very annoying. This prevents that."
   :hook
   (LaTeX-mode . turn-on-prettify-symbols-mode))
 
+
+;; HASKELL
+
 (use-package haskell-mode
   :ensure t
   :config
@@ -1009,6 +1228,36 @@ tell you about it. Very annoying. This prevents that."
 
 (add-hook 'haskell-mode-hook 'laluxx/haskell-load-on-save)
 
+
+(defun laluxx/haskell-smart-newline ()
+  "Insert newline, indent, and if applicable, add the function name on the new line in Haskell."
+  (interactive)
+  (let ((function-name nil)
+        (current-line (thing-at-point 'line t)))
+    ;; Check for the function name in the previous lines
+    (save-excursion
+      (if (re-search-backward "^\\([a-zA-Z0-9_']+\\)\\s-+::" nil t)
+          (setq function-name (match-string 1))))
+
+    ;; Insert the newline and indent
+    (haskell-indentation-newline-and-indent)
+
+    ;; Determine the current line context
+    (when (and function-name
+               (not (string-blank-p current-line)) ;; Ignore empty lines
+               (not (string-match-p "^\\s-*l\\s-*=" current-line))) ;; Ignore lines defining 'l'
+      (insert function-name " "))))
+
+
+
+
+(with-eval-after-load 'haskell-mode
+  (define-key haskell-mode-map (kbd "C-j") 'laluxx/haskell-smart-newline)
+  (with-eval-after-load 'haskell-indentation
+    (define-key haskell-indentation-mode-map (kbd "C-j") 'laluxx/haskell-smart-newline)))
+
+
+
 (defun setup-haskell-interactive-keys ()
   "Set up custom keybindings for the Haskell interactive mode."
   (local-set-key (kbd "<up>") 'haskell-interactive-mode-history-previous)
@@ -1022,12 +1271,44 @@ tell you about it. Very annoying. This prevents that."
 (use-package rust-mode
   :ensure t
   :defer t
-  :mode ("\\.rs\\'" . rust-mode))
+  :mode ("\\.rs\\'" . rust-mode)
+  :hook
+  ((rust-mode . lsp)  ;; Enable lsp-mode when rust-mode is activated
+   (rust-mode . (lambda ()
+                  (local-set-key (kbd "C-c C-m") 'lsp-rust-analyzer-expand-macro)))))
+
+(use-package rust-mode
+  :ensure t
+  :defer t
+  :mode ("\\.rs\\'" . rust-mode)
+  :hook
+  (rust-mode . (lambda ()
+                 (local-set-key (kbd "C-c C-m") 'lsp-rust-analyzer-expand-macro))))
+
+
+
+;; (use-package rust-mode
+;;   :ensure t
+;;   :defer t
+;;   :mode ("\\.rs\\'" . rust-mode))
 
 (use-package zig-mode
   :ensure t
   :defer t
-  :mode ("\\.zig\\'" . zig-mode))
+  :config (setq zig-format-on-save nil
+                zig-format-mode 0)
+  :mode ("\\.zig\\'" . zig-mode)
+  ;; :hook (zig-mode . (lambda () (text-scale-set 1)))
+  )
+
+
+;; (use-package zig-mode
+;;   :ensure t
+;;   :defer t
+;;   :config (setq
+;;            zig-format-on-save nil
+;;            zig-format-mode 0)
+;;   :mode ("\\.zig\\'" . zig-mode))
 
 
 
@@ -1059,10 +1340,9 @@ tell you about it. Very annoying. This prevents that."
 (add-hook 'after-save-hook 'my-jade-save-hook)
 
 
-
 ;;;; IELM
 (setq ielm-header "")
-(setq ielm-prompt " 〉 ")
+(setq ielm-prompt " 󰄾 ")
 
 (add-hook 'ielm-mode-hook (lambda ()
                             (define-key ielm-map (kbd "C-l")
@@ -1070,10 +1350,133 @@ tell you about it. Very annoying. This prevents that."
                                           (interactive)
                                           (recenter-top-bottom 0)))))
 
+(defun laluxx/toggle-ielm ()
+  (interactive)
+  (if (get-buffer "*ielm*")
+      (if (equal (current-buffer) (get-buffer "*ielm*"))
+          (bury-buffer)
+        (ielm))
+    (ielm)))
+
+(global-set-key (kbd "C-c C-i") 'laluxx/toggle-ielm)
+
+
+(use-package consult-todo
+  :ensure t
+  :config
+  (global-set-key (kbd "C-h C-t") 'consult-todo))
 
 
 ;; FUNCTIONS
 
+(defun laluxx/kill-ring-save-line ()
+  "Copy the current line to the kill ring without deleting it."
+  (interactive)
+  (kill-ring-save (line-beginning-position) (line-beginning-position 2))
+  (message "Line copied to kill ring"))
+
+(global-set-key (kbd "C-S-k") 'laluxx/kill-ring-save-line)
+
+
+;; TODO Color the output message for better readabilty
+(defun laluxx/convert (input)
+  "Convert INPUT (in decimal, hexadecimal with 0x, octal with 0o, binary with 0b prefix, or ASCII)
+to decimal, hexadecimal, octal, binary formats, and ASCII characters. If a region is active, use its contents as INPUT."
+  (interactive
+   (list (if (use-region-p)
+             (buffer-substring-no-properties (region-beginning) (region-end))
+           (read-string "Enter a number (decimal, hexadecimal with 0x, octal with 0o, binary with 0b prefix, or ASCII): "))))
+  (let* ((decimal
+          (cond
+           ;; Binary input
+           ((string-prefix-p "0b" input)
+            (string-to-number (substring input 2) 2))
+           ;; Hexadecimal input
+           ((string-prefix-p "0x" input)
+            (string-to-number (substring input 2) 16))
+           ;; Octal input
+           ((string-prefix-p "0o" input)
+            (string-to-number (substring input 2) 8))
+           ;; Decimal input
+           ((string-match-p "\\`[0-9]+\\'" input)
+            (string-to-number input))
+           ;; ASCII input
+           (t
+            (let ((ascii-value (string-to-char input)))
+              (if (characterp ascii-value)
+                  (progn
+                    (message "Input is ASCII: %s" input)
+                    ascii-value)
+                nil)))))
+         (binary (format "%s" decimal))
+         (hexadecimal (format "0x%X" decimal))
+         (octal (format "0o%o" decimal))
+         (ascii-char (if (and (characterp decimal) (< decimal 128))
+                         (format "'%c'" (string-to-char (string decimal)))
+                       "N/A")))
+    (message "Input: %s ➜ Decimal: %d,  Hexadecimal: %s,  Octal: %s,  Binary: 0b%s,  ASCII: %s"
+             input decimal hexadecimal octal binary ascii-char)))
+
+
+(global-set-key (kbd "C-c o") 'laluxx/convert)
+
+
+(defun laluxx/find-init ()
+  "Open the Emacs init file."
+  (interactive)
+  (find-file "~/.config/emacs/init.el"))
+
+(global-set-key (kbd "C-c C-f") 'laluxx/find-init)
+
+
+(defun laluxx/copy-c-declaration ()
+  "Copy the current C function declaration to the kill ring, suitable for header files."
+  (interactive)
+  (save-excursion
+    (c-beginning-of-defun)
+    (let (declaration start end return-type function-name parameters)
+      (beginning-of-line)
+      (setq start (point))
+      ;; Find the position just before the function body begins
+      (re-search-forward "{")
+      (backward-char)
+      (setq end (point))
+      ;; Extract the function declaration
+      (setq declaration (buffer-substring-no-properties start end))
+      ;; Prepare the declaration for copying and display
+      (setq declaration (replace-regexp-in-string "[[:space:]\n]+" " " declaration))
+      (setq declaration (string-trim declaration))
+      (setq declaration (concat declaration ";"))
+
+      ;; Adjusted regex to capture any C identifier as the return type and function name
+      (if (string-match "\\([a-zA-Z_][a-zA-Z0-9_]*[[:space:]*]+\\)\\([a-zA-Z_][a-zA-Z0-9_]*\\)[[:space:]]*(\\(.*\\))" declaration)
+          (setq return-type (match-string 1 declaration)
+                function-name (match-string 2 declaration)
+                parameters (match-string 3 declaration)))
+
+      ;; Manually propertize the parsed declaration
+      (setq declaration
+            (concat (propertize return-type 'face 'font-lock-type-face)  ;; Return type (custom types too)
+                    (propertize function-name 'face 'font-lock-function-name-face)  ;; Function name
+                    "("
+                    (propertize parameters 'face 'font-lock-variable-name-face)  ;; Parameters
+                    ");"))
+
+      ;; Copy to kill ring
+      (kill-new declaration)
+      ;; Display in the minibuffer with properties
+      (message "%s %s"
+               (propertize "KILLED:" 'face 'error)
+               declaration))))
+
+(global-set-key (kbd "C-c k") 'laluxx/copy-c-declaration)
+
+(defun my-direct-info (topic)
+  "Open Info documentation directly for TOPIC, similar to command-line 'info TOPIC'"
+  (interactive "sInfo topic: ")
+  (info "coreutils")  ; First open coreutils manual
+  (Info-goto-node (concat "* " topic))  ; Then jump to the specific command node
+  )
 
 (defun laluxx/toggle-scratch-buffer ()
   "Toggle the scratch buffer. If the scratch buffer is not visible, create it in a new window."
@@ -1485,6 +1888,18 @@ If LIGHTER is non-nil, the color will be lightened; otherwise, it will be darken
 ;; TODO https://github.com/alphapapa/org-super-agenda
 ;; TODO https://github.com/bastibe/org-journal
 
+
+(org-babel-do-load-languages
+'org-babel-load-languages
+'((emacs-lisp . t)
+  (org . t)
+  (python . t)
+  (haskell . t)
+  ))
+
+(setq org-confirm-babel-evaluate nil)
+
+
 (require 'org-tempo)
 
 (setq org-hide-emphasis-markers t)
@@ -1496,7 +1911,7 @@ If LIGHTER is non-nil, the color will be lightened; otherwise, it will be darken
   :ensure t
   :hook (org-mode . org-bullets-mode)
   :config
-  (setq org-bullets-bullet-list '("◉" "○" "⬠" "⚫"))) ;; • ●
+  (setq org-bullets-bullet-list '("◉" "○" "⚫" "•"))) ;; ⬠ ●
 
 
 (defun laluxx/org-next-visible-heading-and-recenter ()
@@ -1569,12 +1984,10 @@ If LIGHTER is non-nil, the color will be lightened; otherwise, it will be darken
 (put 'narrow-to-region 'disabled nil)
 
 
-
-
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages nil))
+ '(package-selected-packages
+   '(parrot corfu-doc-mode corfu-doc recursion-indicator consult-todo consult-lsp lsp-consult jinx-mode jinx all-the-icons eshell-z esh-help eshell-prompt-extras zig-mode which-key vertico theme-magic solaire-mode rust-mode rainbow-mode rainbow-delimiters popper org-bullets orderless olivetti nerd-icons-dired nerd-icons-corfu nerd-icons-completion marginalia magit lsp-ui kaolin-themes iedit hl-todo helpful haskell-mode glsl-mode eyebrowse eat doom-themes doom-modeline diredfl corfu consult-flycheck auctex)))

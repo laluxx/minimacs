@@ -6,12 +6,14 @@
 (setq initial-scratch-message nil)
 (setq inhibit-startup-message t)
 
-(add-to-list 'default-frame-alist '(background-color . "#1A1A25"))
+;; (add-to-list 'default-frame-alist '(background-color . "#1A1A25")) ;; Kaolin Ocean
+(add-to-list 'default-frame-alist '(background-color . "#18181B"))    ;; Kaolin Dark
 
-;; (set-face-attribute 'default nil
-;;                     :family "JetBrains Mono Nerd Font"
-;;                     :weight 'medium
-;;                     :height 110)
+(set-face-attribute 'default nil
+                    :family "JetBrains Mono Nerd Font"
+                    :weight 'medium
+                    :height 110
+                    )
 
 
 (setq frame-resize-pixelwise t)

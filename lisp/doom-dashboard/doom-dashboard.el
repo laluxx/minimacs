@@ -34,7 +34,7 @@
   "Prevent killing the Doom dashboard buffer and display a message."
   (if (string= (buffer-name) "*doom*")
       (progn
-        (message (propertize "God said you cannot kill Doom buffer!" 'face 'error))
+        (message (propertize "Why are you kill DOOM!" 'face 'error))
         nil)  ;; Return nil to prevent the buffer from being killed
     t))     ;; Return t to allow other buffers to be killed
 
